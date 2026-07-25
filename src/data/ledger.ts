@@ -16,7 +16,7 @@ function validateLedger(data: unknown) {
     assert(typeof payment.paid === 'boolean', `Rent entry ${index + 1} needs a paid boolean`)
   })
   ledger.waterInvoices.forEach((invoice, index) => {
-    assert(ISO_DATE.test(invoice.invoiceDate), `Water invoice ${index + 1} needs an ISO invoiceDate`)
+    assert(ISO_DATE.test(invoice.invoiceDate) && ISO_DATE.test(invoice.dueDate), `Water invoice ${index + 1} needs ISO invoice and due dates`)
     ;['total', 'fixed', 'tenantUsage'].forEach((field) => assert(typeof invoice[field as keyof typeof invoice] === 'number', `Water invoice ${index + 1} needs a numeric ${field}`))
     assert(typeof invoice.paid === 'boolean', `Water invoice ${index + 1} needs a paid boolean`)
   })

@@ -35,13 +35,13 @@ function App() {
     return { ...payment, dueDate, state: paymentState(payment, dueDate) }
   })
   const waterStates = waterInvoices.map((invoice) => {
-    const dueDate = parseDate(invoice.invoiceDate)
-    return { ...invoice, dueDate, state: paymentState(invoice, dueDate) }
+    const paymentDueDate = parseDate(invoice.dueDate)
+    return { ...invoice, paymentDueDate, state: paymentState(invoice, paymentDueDate) }
   })
   const unpaidWater = waterInvoices.filter((invoice) => !invoice.paid).reduce((sum, invoice) => sum + invoice.tenantUsage, 0)
   const attention = [
     ...rentStates.filter((item) => item.state === 'overdue').map((item) => ({ type: 'Rent payment', date: item.dueDate, detail: `${formatDate(item.periodStart)} – ${formatDate(item.periodEnd)}`, state: item.state })),
-    ...waterStates.filter((item) => !item.paid).map((item) => ({ type: 'Water invoice', date: item.dueDate, detail: `${formatMoney(item.tenantUsage)} tenant usage`, state: item.state })),
+    ...waterStates.filter((item) => !item.paid).map((item) => ({ type: 'Water invoice', date: item.paymentDueDate, detail: `${formatMoney(item.tenantUsage)} tenant usage`, state: item.state })),
   ].sort((a, b) => a.date.getTime() - b.date.getTime())
   const visibleRent = useMemo(() => filter === 'all' ? rentStates : rentStates.filter((item) => item.state === filter), [filter, rentStates])
   const visibleWater = useMemo(() => filter === 'all' ? waterStates : waterStates.filter((item) => item.state === filter), [filter, waterStates])
@@ -62,7 +62,7 @@ function App() {
 }
 
 type RentRow = (typeof ledger.rentPayments)[number] & { dueDate: Date; state: PaymentState }
-type WaterRow = (typeof ledger.waterInvoices)[number] & { dueDate: Date; state: PaymentState }
+type WaterRow = (typeof ledger.waterInvoices)[number] & { paymentDueDate: Date; state: PaymentState }
 type AttentionItem = { type: string; date: Date; detail: string; state: PaymentState }
 
 function Overview({ rentStates, waterStates, unpaidWater, attention }: { rentStates: RentRow[]; waterStates: WaterRow[]; unpaidWater: number; attention: AttentionItem[] }) {
