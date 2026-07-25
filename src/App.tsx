@@ -5,14 +5,20 @@ import './App.css'
 type PaymentState = 'paid' | 'overdue' | 'upcoming'
 
 const parseDate = (value: string) => new Date(`${value}T12:00:00`)
-const formatDate = (value: string) => new Intl.DateTimeFormat('en-NZ', { day: '2-digit', month: 'short', year: 'numeric' }).format(parseDate(value))
+const formatDate = (value: string | Date) => new Intl.DateTimeFormat('en-NZ', { day: '2-digit', month: 'short', year: 'numeric' }).format(value instanceof Date ? value : parseDate(value))
 const formatMoney = (amount: number) => new Intl.NumberFormat('en-NZ', { style: 'currency', currency: ledger.property.currency }).format(amount)
 const today = new Date()
 today.setHours(0, 0, 0, 0)
 
-function paymentState(item: { paid: boolean }, endDate: string): PaymentState {
+function rentDueDate(periodStart: string) {
+  const dueDate = parseDate(periodStart)
+  dueDate.setDate(dueDate.getDate() - 1)
+  return dueDate
+}
+
+function paymentState(item: { paid: boolean }, dueDate: Date): PaymentState {
   if (item.paid) return 'paid'
-  return parseDate(endDate) < today ? 'overdue' : 'upcoming'
+  return dueDate < today ? 'overdue' : 'upcoming'
 }
 
 function Status({ state }: { state: PaymentState }) {
@@ -24,13 +30,19 @@ function App() {
   const [view, setView] = useState<'overview' | 'rent' | 'water'>('overview')
   const [filter, setFilter] = useState<'all' | PaymentState>('all')
   const { rentPayments, waterInvoices } = ledger
-  const rentStates = rentPayments.map((payment) => ({ ...payment, state: paymentState(payment, payment.periodEnd) }))
-  const waterStates = waterInvoices.map((invoice) => ({ ...invoice, state: paymentState(invoice, invoice.invoiceDate) }))
+  const rentStates = rentPayments.map((payment) => {
+    const dueDate = rentDueDate(payment.periodStart)
+    return { ...payment, dueDate, state: paymentState(payment, dueDate) }
+  })
+  const waterStates = waterInvoices.map((invoice) => {
+    const dueDate = parseDate(invoice.invoiceDate)
+    return { ...invoice, dueDate, state: paymentState(invoice, dueDate) }
+  })
   const unpaidWater = waterInvoices.filter((invoice) => !invoice.paid).reduce((sum, invoice) => sum + invoice.tenantUsage, 0)
   const attention = [
-    ...rentStates.filter((item) => item.state === 'overdue').map((item) => ({ type: 'Rent payment', date: item.periodEnd, detail: `${formatDate(item.periodStart)} – ${formatDate(item.periodEnd)}`, state: item.state })),
-    ...waterStates.filter((item) => !item.paid).map((item) => ({ type: 'Water invoice', date: item.invoiceDate, detail: `${formatMoney(item.tenantUsage)} tenant usage`, state: item.state })),
-  ].sort((a, b) => parseDate(a.date).getTime() - parseDate(b.date).getTime())
+    ...rentStates.filter((item) => item.state === 'overdue').map((item) => ({ type: 'Rent payment', date: item.dueDate, detail: `${formatDate(item.periodStart)} – ${formatDate(item.periodEnd)}`, state: item.state })),
+    ...waterStates.filter((item) => !item.paid).map((item) => ({ type: 'Water invoice', date: item.dueDate, detail: `${formatMoney(item.tenantUsage)} tenant usage`, state: item.state })),
+  ].sort((a, b) => a.date.getTime() - b.date.getTime())
   const visibleRent = useMemo(() => filter === 'all' ? rentStates : rentStates.filter((item) => item.state === filter), [filter, rentStates])
   const visibleWater = useMemo(() => filter === 'all' ? waterStates : waterStates.filter((item) => item.state === filter), [filter, waterStates])
 
@@ -49,12 +61,12 @@ function App() {
   </main>
 }
 
-type RentRow = (typeof ledger.rentPayments)[number] & { state: PaymentState }
-type WaterRow = (typeof ledger.waterInvoices)[number] & { state: PaymentState }
-type AttentionItem = { type: string; date: string; detail: string; state: PaymentState }
+type RentRow = (typeof ledger.rentPayments)[number] & { dueDate: Date; state: PaymentState }
+type WaterRow = (typeof ledger.waterInvoices)[number] & { dueDate: Date; state: PaymentState }
+type AttentionItem = { type: string; date: Date; detail: string; state: PaymentState }
 
 function Overview({ rentStates, waterStates, unpaidWater, attention }: { rentStates: RentRow[]; waterStates: WaterRow[]; unpaidWater: number; attention: AttentionItem[] }) {
-  const nextRent = rentStates.find((item) => !item.paid && parseDate(item.periodEnd) >= today) || rentStates.find((item) => !item.paid)
+  const nextRent = rentStates.find((item) => !item.paid && item.dueDate >= today) || rentStates.find((item) => !item.paid)
   return <>
     <section className="stat-grid">
       <article className="stat-card"><span className="icon rent-icon">⌂</span><p>Next rent period</p><strong>{nextRent ? formatDate(nextRent.periodStart) : 'All paid'}</strong><small>{nextRent ? `${formatDate(nextRent.periodStart)} – ${formatDate(nextRent.periodEnd)}` : 'No outstanding periods'}</small></article>
@@ -70,7 +82,7 @@ function Overview({ rentStates, waterStates, unpaidWater, attention }: { rentSta
 function LedgerTable({ kind, rows, filter, setFilter }: { kind: 'rent' | 'water'; rows: RentRow[] | WaterRow[]; filter: 'all' | PaymentState; setFilter: (filter: 'all' | PaymentState) => void }) {
   const rent = kind === 'rent'
   return <section className="panel ledger-panel"><div className="section-heading"><div><p className="eyebrow">{rent ? 'WEEKLY SCHEDULE' : 'INVOICE HISTORY'}</p><h2>{rent ? 'Rent payments' : 'Water invoices'}</h2></div><div className="filters">{(['all', 'paid', 'upcoming', 'overdue'] as const).filter((option) => rent || option !== 'upcoming').map((option) => <button key={option} onClick={() => setFilter(option)} className={filter === option ? 'selected' : ''}>{option}</button>)}</div></div>
-    <div className="table-wrap"><table><thead><tr>{rent ? <><th>Period</th><th>Due date</th><th>Paid date</th></> : <><th>Invoice date</th><th>Total</th><th>Fixed</th><th>Tenant usage</th></>}<th>Status</th></tr></thead><tbody>{rows.map((item) => 'periodStart' in item ? <tr key={item.periodStart}><td><strong>{formatDate(item.periodStart)}</strong><span>{formatDate(item.periodEnd)}</span></td><td>{formatDate(item.periodEnd)}</td><td>{item.paidDate ? formatDate(item.paidDate) : '—'}</td><td><Status state={item.state} /></td></tr> : <tr key={item.invoiceDate}><td><strong>{formatDate(item.invoiceDate)}</strong></td><td>{formatMoney(item.total)}</td><td>{formatMoney(item.fixed)}</td><td className="tenant-charge">{formatMoney(item.tenantUsage)}</td><td><Status state={item.state} /></td></tr>)}</tbody></table></div>
+    <div className="table-wrap"><table><thead><tr>{rent ? <><th>Period</th><th>Due date</th><th>Paid date</th></> : <><th>Invoice date</th><th>Total</th><th>Fixed</th><th>Tenant usage</th></>}<th>Status</th></tr></thead><tbody>{rows.map((item) => 'periodStart' in item ? <tr key={item.periodStart}><td><strong>{formatDate(item.periodStart)}</strong><span>{formatDate(item.periodEnd)}</span></td><td>{formatDate(item.dueDate)}</td><td>{item.paidDate ? formatDate(item.paidDate) : '—'}</td><td><Status state={item.state} /></td></tr> : <tr key={item.invoiceDate}><td><strong>{formatDate(item.invoiceDate)}</strong></td><td>{formatMoney(item.total)}</td><td>{formatMoney(item.fixed)}</td><td className="tenant-charge">{formatMoney(item.tenantUsage)}</td><td><Status state={item.state} /></td></tr>)}</tbody></table></div>
     {!rows.length && <p className="empty">No entries match this filter.</p>}
   </section>
 }
