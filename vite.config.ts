@@ -1,7 +1,20 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { execFileSync } from 'node:child_process'
 
-const buildNumber = process.env.GITHUB_RUN_NUMBER ?? process.env.VITE_PIPELINE_RUN_NUMBER ?? 'local'
+const getShortCommitHash = () => {
+  if (process.env.GITHUB_SHA) return process.env.GITHUB_SHA.slice(0, 7)
+
+  try {
+    return execFileSync('git', ['rev-parse', '--short=7', 'HEAD'], { encoding: 'utf8' }).trim()
+  } catch {
+    return 'unknown'
+  }
+}
+
+const commitHash = getShortCommitHash()
+const pipelineRunNumber = process.env.GITHUB_RUN_NUMBER ?? process.env.VITE_PIPELINE_RUN_NUMBER
+const buildVersion = pipelineRunNumber ? `${commitHash} · run ${pipelineRunNumber}` : commitHash
 const dateParts = new Intl.DateTimeFormat('en-NZ', {
   timeZone: 'Pacific/Auckland',
   year: 'numeric',
@@ -15,7 +28,7 @@ export default defineConfig({
   plugins: [react()],
   base: '/marina-road/',
   define: {
-    __BUILD_VERSION__: JSON.stringify(buildNumber),
+    __BUILD_VERSION__: JSON.stringify(buildVersion),
     __BUILD_DATE__: JSON.stringify(buildDate),
   },
 })
