@@ -44,7 +44,7 @@ function App() {
   const unpaidWater = waterInvoices.filter((invoice) => !invoice.paid).reduce((sum, invoice) => sum + invoice.tenantUsage, 0)
   const attention = [
     ...rentStates.filter((item) => item.state === 'overdue').map((item) => ({ type: 'Rent payment', date: item.dueDate, detail: `${formatDate(item.periodStart)} – ${formatDate(item.periodEnd)}`, state: item.state })),
-    ...waterStates.filter((item) => !item.paid).map((item) => ({ type: 'Water invoice', date: item.paymentDueDate, detail: `${formatMoney(item.tenantUsage)} tenant usage`, state: item.state })),
+    ...waterStates.filter((item) => !item.paid).map((item) => ({ type: 'Water invoice', date: item.paymentDueDate, detail: 'tenant to pay', amount: formatMoney(item.tenantUsage), state: item.state })),
   ].sort((a, b) => a.date.getTime() - b.date.getTime())
   const visibleRent = useMemo(() => filter === 'all' ? rentStates : rentStates.filter((item) => item.state === filter), [filter, rentStates])
   const visibleWater = useMemo(() => filter === 'all' ? waterStates : waterStates.filter((item) => item.state === filter), [filter, waterStates])
@@ -67,7 +67,7 @@ function App() {
 
 type RentRow = (typeof ledger.rentPayments)[number] & { dueDate: Date; state: PaymentState }
 type WaterRow = (typeof ledger.waterInvoices)[number] & { paymentDueDate: Date; state: PaymentState }
-type AttentionItem = { type: string; date: Date; detail: string; state: PaymentState }
+type AttentionItem = { type: string; date: Date; detail: string; amount?: string; state: PaymentState }
 
 function Overview({ rentStates, waterStates, unpaidWater, attention }: { rentStates: RentRow[]; waterStates: WaterRow[]; unpaidWater: number; attention: AttentionItem[] }) {
   const nextRent = rentStates.find((item) => !item.paid && item.dueDate >= today) || rentStates.find((item) => !item.paid)
@@ -78,7 +78,7 @@ function Overview({ rentStates, waterStates, unpaidWater, attention }: { rentSta
       <article className="stat-card"><span className="icon paid-icon">✓</span><p>Payments recorded</p><strong>{rentStates.filter((item) => item.paid).length + waterStates.filter((item) => item.paid).length}</strong><small>{rentStates.filter((item) => item.paid).length} rent · {waterStates.filter((item) => item.paid).length} water</small></article>
     </section>
     <section className="panel attention"><div className="section-heading"><div><p className="eyebrow">ACTION NEEDED</p><h2>Open items</h2></div><span className="count">{attention.length}</span></div>
-      {attention.length ? <div className="action-list">{attention.map((item, index) => <div className="action-row" key={`${item.type}-${index}`}><span className="action-icon">{item.type === 'Rent payment' ? '⌂' : '≈'}</span><div><strong>{item.type}</strong><p>{item.detail}</p></div><div className="action-right"><span>{formatDate(item.date)}</span><Status state={item.state} /></div></div>)}</div> : <p className="empty">Nothing is waiting for attention.</p>}
+      {attention.length ? <div className="action-list">{attention.map((item, index) => <div className="action-row" key={`${item.type}-${index}`}><span className="action-icon">{item.type === 'Rent payment' ? '⌂' : '≈'}</span><div className={item.amount ? 'water-summary' : undefined}><strong>{item.type}</strong>{item.amount ? <span className="water-charge"><b>{item.amount}</b>{item.detail}</span> : <p>{item.detail}</p>}</div><div className="action-right"><span className={item.type === 'Water invoice' ? 'action-due' : undefined}>{item.type === 'Water invoice' ? `Due at ${formatDate(item.date)}` : formatDate(item.date)}</span><Status state={item.state} /></div></div>)}</div> : <p className="empty">Nothing is waiting for attention.</p>}
     </section>
   </>
 }
