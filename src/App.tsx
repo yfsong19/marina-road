@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react'
 import { ledger } from './data/ledger'
 import './App.css'
 
+const waterBillFiles = import.meta.glob('./Water Bills/*.pdf', { eager: true, import: 'default', query: '?url' }) as Record<string, string>
+
 declare const __BUILD_VERSION__: string
 declare const __BUILD_DATE__: string
 
@@ -32,6 +34,7 @@ function Status({ state }: { state: PaymentState }) {
 function App() {
   const [view, setView] = useState<'overview' | 'rent' | 'water'>('overview')
   const [filter, setFilter] = useState<'all' | PaymentState>('all')
+  const [pendingBill, setPendingBill] = useState<{ url: string; file: string } | null>(null)
   const { rentPayments, waterInvoices } = ledger
   const rentStates = rentPayments.map((payment) => {
     const dueDate = rentDueDate(payment.periodStart)
@@ -49,7 +52,16 @@ function App() {
   const visibleRent = useMemo(() => filter === 'all' ? rentStates : rentStates.filter((item) => item.state === filter), [filter, rentStates])
   const visibleWater = useMemo(() => filter === 'all' ? waterStates : waterStates.filter((item) => item.state === filter), [filter, waterStates])
 
-  return <main className="app-shell">
+  const downloadBill = () => {
+    if (!pendingBill) return
+    const link = document.createElement('a')
+    link.href = pendingBill.url
+    link.download = pendingBill.file
+    link.click()
+    setPendingBill(null)
+  }
+
+  return <><main className="app-shell">
     <header className="topbar">
       <div className="brand"><span className="brand-mark">H</span><div><strong>{ledger.property.name}</strong><small>{ledger.property.tenant} · Payment overview</small></div></div>
       <div className="today">{new Intl.DateTimeFormat('en-NZ', { weekday: 'long', day: 'numeric', month: 'long' }).format(today)}</div>
@@ -60,9 +72,9 @@ function App() {
     </nav>
     {view === 'overview' && <Overview rentStates={rentStates} waterStates={waterStates} unpaidWater={unpaidWater} attention={attention} />}
     {view === 'rent' && <LedgerTable kind="rent" rows={visibleRent} filter={filter} setFilter={setFilter} />}
-    {view === 'water' && <LedgerTable kind="water" rows={visibleWater} filter={filter} setFilter={setFilter} />}
+    {view === 'water' && <LedgerTable kind="water" rows={visibleWater} filter={filter} setFilter={setFilter} onDownloadRequest={setPendingBill} />}
     <footer className="build-version">Version: {__BUILD_VERSION__} - {__BUILD_DATE__}</footer>
-  </main>
+  </main>{pendingBill && <div className="download-dialog-backdrop" role="presentation"><section className="download-dialog" role="alertdialog" aria-modal="true" aria-labelledby="download-dialog-title"><h2 id="download-dialog-title">Download bill?</h2><p>Would you like to download this water invoice PDF?</p><div><button className="dialog-no" onClick={() => setPendingBill(null)}>No</button><button className="dialog-yes" onClick={downloadBill}>Yes, download</button></div></section></div>}</>
 }
 
 type RentRow = (typeof ledger.rentPayments)[number] & { dueDate: Date; state: PaymentState }
@@ -83,10 +95,10 @@ function Overview({ rentStates, waterStates, unpaidWater, attention }: { rentSta
   </>
 }
 
-function LedgerTable({ kind, rows, filter, setFilter }: { kind: 'rent' | 'water'; rows: RentRow[] | WaterRow[]; filter: 'all' | PaymentState; setFilter: (filter: 'all' | PaymentState) => void }) {
+function LedgerTable({ kind, rows, filter, setFilter, onDownloadRequest }: { kind: 'rent' | 'water'; rows: RentRow[] | WaterRow[]; filter: 'all' | PaymentState; setFilter: (filter: 'all' | PaymentState) => void; onDownloadRequest?: (bill: { url: string; file: string }) => void }) {
   const rent = kind === 'rent'
   return <section className="panel ledger-panel"><div className="section-heading"><div><p className="eyebrow">{rent ? 'WEEKLY SCHEDULE' : 'INVOICE HISTORY'}</p><h2>{rent ? 'Rent payments' : 'Water invoices'}</h2></div><div className="filters">{(['all', 'paid', 'upcoming', 'overdue'] as const).filter((option) => rent || option !== 'upcoming').map((option) => <button key={option} onClick={() => setFilter(option)} className={filter === option ? 'selected' : ''}>{option}</button>)}</div></div>
-    <div className="table-wrap"><table><thead><tr>{rent ? <><th>Period</th><th>Due date</th><th>Paid date</th></> : <><th>Invoice date</th><th>Total</th><th>Fixed</th><th>Tenant usage</th></>}<th>Status</th></tr></thead><tbody>{rows.map((item) => 'periodStart' in item ? <tr key={item.periodStart}><td><strong>{formatDate(item.periodStart)}</strong><span>{formatDate(item.periodEnd)}</span></td><td>{formatDate(item.dueDate)}</td><td>{item.paidDate ? formatDate(item.paidDate) : '—'}</td><td><Status state={item.state} /></td></tr> : <tr key={item.invoiceDate}><td><strong>{formatDate(item.invoiceDate)}</strong></td><td>{formatMoney(item.total)}</td><td>{formatMoney(item.fixed)}</td><td className="tenant-charge">{formatMoney(item.tenantUsage)}</td><td><Status state={item.state} /></td></tr>)}</tbody></table></div>
+    <div className="table-wrap"><table><thead><tr>{rent ? <><th>Period</th><th>Due date</th><th>Paid date</th></> : <><th>Invoice date</th><th>Total</th><th>Fixed</th><th>Tenant usage</th><th>Bill</th></>}<th>Status</th></tr></thead><tbody>{rows.map((item) => 'periodStart' in item ? <tr key={item.periodStart}><td><strong>{formatDate(item.periodStart)}</strong><span>{formatDate(item.periodEnd)}</span></td><td>{formatDate(item.dueDate)}</td><td>{item.paidDate ? formatDate(item.paidDate) : '—'}</td><td><Status state={item.state} /></td></tr> : <tr key={item.invoiceDate}><td><strong>{formatDate(item.invoiceDate)}</strong></td><td>{formatMoney(item.total)}</td><td>{formatMoney(item.fixed)}</td><td className="tenant-charge">{formatMoney(item.tenantUsage)}</td><td>{item.file && waterBillFiles[`./Water Bills/${item.file}`] ? <button className="download-bill" onClick={() => onDownloadRequest?.({ url: waterBillFiles[`./Water Bills/${item.file}`], file: item.file })}>Download bill</button> : '—'}</td><td><Status state={item.state} /></td></tr>)}</tbody></table></div>
     {!rows.length && <p className="empty">No entries match this filter.</p>}
   </section>
 }
