@@ -2,6 +2,9 @@ import { useMemo, useState } from 'react'
 import { ledger } from './data/ledger'
 import './App.css'
 
+declare const __BUILD_VERSION__: string
+declare const __BUILD_DATE__: string
+
 type PaymentState = 'paid' | 'overdue' | 'upcoming'
 
 const parseDate = (value: string) => new Date(`${value}T12:00:00`)
@@ -58,6 +61,7 @@ function App() {
     {view === 'overview' && <Overview rentStates={rentStates} waterStates={waterStates} unpaidWater={unpaidWater} attention={attention} />}
     {view === 'rent' && <LedgerTable kind="rent" rows={visibleRent} filter={filter} setFilter={setFilter} />}
     {view === 'water' && <LedgerTable kind="water" rows={visibleWater} filter={filter} setFilter={setFilter} />}
+    <footer className="build-version">Version: {__BUILD_VERSION__} - {__BUILD_DATE__}</footer>
   </main>
 }
 
