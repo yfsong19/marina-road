@@ -81,14 +81,6 @@ type RentRow = (typeof ledger.rentPayments)[number] & { dueDate: Date; state: Pa
 type WaterRow = (typeof ledger.waterInvoices)[number] & { paymentDueDate: Date; state: PaymentState }
 type AttentionItem = { type: string; date: Date; detail: string; amount?: string; state: PaymentState }
 
-const rentMonths = Array.from({ length: 13 }, (_, index) => {
-  const date = new Date(2026, 6 + index, 1)
-  return {
-    key: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`,
-    label: new Intl.DateTimeFormat('en-NZ', { month: 'long', year: 'numeric' }).format(date).replace(' ', '-'),
-  }
-})
-
 function Overview({ rentStates, waterStates, unpaidWater, attention }: { rentStates: RentRow[]; waterStates: WaterRow[]; unpaidWater: number; attention: AttentionItem[] }) {
   const nextRent = rentStates.find((item) => !item.paid && item.dueDate >= today) || rentStates.find((item) => !item.paid)
   return <>
@@ -108,24 +100,17 @@ function RentCalendar({ rows }: { rows: RentRow[] }) {
 
   return <section className="panel rent-calendar">
     <div className="section-heading"><div><p className="eyebrow">WEEKLY SCHEDULE</p><h2>Rent payments</h2></div><div className="rent-legend"><span className="paid">Paid</span><span className="next">Upcoming</span><span>Scheduled</span></div></div>
-    <div className="rent-months">
-      {rentMonths.map((month) => {
-        const periods = rows.filter((item) => item.periodStart.startsWith(month.key))
-        return <div className="rent-month" key={month.key}>
-          <h3>{month.label}</h3>
-          <div className="rent-weeks">
-            {periods.map((period) => {
-              const isNext = period === nextUnpaid
-              return <article className={`rent-week${period.paid ? ' paid' : isNext ? ' next' : ''}`} key={period.periodStart}>
-                <span className="rent-week-state">{period.paid ? 'Paid' : isNext ? 'Upcoming' : 'Scheduled'}</span>
-                <strong>{formatShortDate(period.periodStart)}</strong>
-                <i>to</i>
-                <strong>{formatShortDate(period.periodEnd)}</strong>
-                <small>{period.paidDate ? `Paid ${formatShortDate(period.paidDate)}` : `Due ${formatShortDate(period.dueDate)}`}</small>
-              </article>
-            })}
-          </div>
-        </div>
+    <div className="rent-grid">
+      {rows.map((period) => {
+        const isNext = period === nextUnpaid
+        const visualState = period.paid ? 'paid' : isNext ? 'next' : period.state === 'overdue' ? 'overdue' : 'scheduled'
+        const statusLabel = visualState === 'paid' ? 'Paid' : visualState === 'next' ? 'Upcoming' : visualState === 'overdue' ? 'Overdue' : 'Scheduled'
+        const monthLabel = new Intl.DateTimeFormat('en-NZ', { month: 'long', year: 'numeric' }).format(parseDate(period.periodStart))
+        return <article className={`rent-card ${visualState}`} key={period.periodStart}>
+          <div className="rent-card-top"><span>{monthLabel}</span><span className="rent-card-status">{statusLabel}</span></div>
+          <strong>{formatShortDate(period.periodStart)} – {formatShortDate(period.periodEnd)}</strong>
+          <small>{period.paidDate ? `Paid ${formatShortDate(period.paidDate)}` : `Due ${formatShortDate(period.dueDate)}`}</small>
+        </article>
       })}
     </div>
   </section>
