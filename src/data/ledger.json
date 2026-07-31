@@ -15,7 +15,7 @@
     { "periodStart": "2026-10-05", "periodEnd": "2026-10-11", "paid": false, "paidDate": null }
   ],
   "waterInvoices": [
-    { "invoiceDate": "2026-06-11", "dueDate": "2026-07-21", "total": 64.42, "fixed": 26.38, "tenantUsage": 38.04, "paid": true, "paidDate": "2026-06-20", "file": "Watercare_Bill_5072857-03_2026_Jun_11.pdf" },
-    { "invoiceDate": "2026-07-14", "dueDate": "2026-08-04", "total": 45.43, "fixed": 29.11, "tenantUsage": 16.32, "paid": false, "paidDate": null, "file": "Watercare_Bill_5072857-03_2026_Jul_14.pdf" }
+    { "invoiceDate": "2026-06-11", "dueDate": "2026-07-21", "total": 64.42, "fixed": 26.38, "tenantUsage": 38.04, "tenantPaid": true, "tenantPaidDate": "2026-06-20", "file": "Watercare_Bill_5072857-03_2026_Jun_11.pdf", "totalPaidByLandlord": true },
+    { "invoiceDate": "2026-07-14", "dueDate": "2026-08-04", "total": 45.43, "fixed": 29.11, "tenantUsage": 16.32, "tenantPaid": false, "tenantPaidDate": null, "file": "Watercare_Bill_5072857-03_2026_Jul_14.pdf", "totalPaidByLandlord": false }
   ]
 }
