@@ -11,6 +11,7 @@ type PaymentState = 'paid' | 'overdue' | 'upcoming'
 
 const parseDate = (value: string) => new Date(`${value}T12:00:00`)
 const formatDate = (value: string | Date) => new Intl.DateTimeFormat('en-NZ', { day: '2-digit', month: 'short', year: 'numeric' }).format(value instanceof Date ? value : parseDate(value))
+const formatShortDate = (value: string | Date) => new Intl.DateTimeFormat('en-NZ', { day: 'numeric', month: 'short' }).format(value instanceof Date ? value : parseDate(value))
 const formatMoney = (amount: number) => new Intl.NumberFormat('en-NZ', { style: 'currency', currency: ledger.property.currency }).format(amount)
 const today = new Date()
 today.setHours(0, 0, 0, 0)
@@ -49,7 +50,6 @@ function App() {
     ...rentStates.filter((item) => item.state === 'overdue').map((item) => ({ type: 'Rent payment', date: item.dueDate, detail: `${formatDate(item.periodStart)} – ${formatDate(item.periodEnd)}`, state: item.state })),
     ...waterStates.filter((item) => !item.tenantPaid).map((item) => ({ type: 'Water invoice', date: item.paymentDueDate, detail: 'tenant to pay', amount: formatMoney(item.tenantUsage), state: item.state })),
   ].sort((a, b) => a.date.getTime() - b.date.getTime())
-  const visibleRent = useMemo(() => filter === 'all' ? rentStates : rentStates.filter((item) => item.state === filter), [filter, rentStates])
   const visibleWater = useMemo(() => filter === 'all' ? waterStates : waterStates.filter((item) => item.state === filter), [filter, waterStates])
 
   const downloadBill = () => {
@@ -71,7 +71,7 @@ function App() {
       {([['overview', 'Overview'], ['rent', 'Rent'], ['water', 'Water']] as const).map(([id, label]) => <button key={id} className={view === id ? 'active' : ''} onClick={() => setView(id)}>{label}</button>)}
     </nav>
     {view === 'overview' && <Overview rentStates={rentStates} waterStates={waterStates} unpaidWater={unpaidWater} attention={attention} />}
-    {view === 'rent' && <LedgerTable kind="rent" rows={visibleRent} filter={filter} setFilter={setFilter} />}
+    {view === 'rent' && <RentCalendar rows={rentStates} />}
     {view === 'water' && <LedgerTable kind="water" rows={visibleWater} filter={filter} setFilter={setFilter} onDownloadRequest={setPendingBill} />}
     <footer className="build-version">Version: {__BUILD_VERSION__} - {__BUILD_DATE__}</footer>
   </main>{pendingBill && <div className="download-dialog-backdrop" role="presentation"><section className="download-dialog" role="alertdialog" aria-modal="true" aria-labelledby="download-dialog-title"><h2 id="download-dialog-title">Download bill?</h2><p>Would you like to download this water invoice PDF?</p><div><button className="dialog-no" onClick={() => setPendingBill(null)}>No</button><button className="dialog-yes" onClick={downloadBill}>Yes, download</button></div></section></div>}</>
@@ -80,6 +80,14 @@ function App() {
 type RentRow = (typeof ledger.rentPayments)[number] & { dueDate: Date; state: PaymentState }
 type WaterRow = (typeof ledger.waterInvoices)[number] & { paymentDueDate: Date; state: PaymentState }
 type AttentionItem = { type: string; date: Date; detail: string; amount?: string; state: PaymentState }
+
+const rentMonths = Array.from({ length: 13 }, (_, index) => {
+  const date = new Date(2026, 6 + index, 1)
+  return {
+    key: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`,
+    label: new Intl.DateTimeFormat('en-NZ', { month: 'long', year: 'numeric' }).format(date).replace(' ', '-'),
+  }
+})
 
 function Overview({ rentStates, waterStates, unpaidWater, attention }: { rentStates: RentRow[]; waterStates: WaterRow[]; unpaidWater: number; attention: AttentionItem[] }) {
   const nextRent = rentStates.find((item) => !item.paid && item.dueDate >= today) || rentStates.find((item) => !item.paid)
@@ -93,6 +101,34 @@ function Overview({ rentStates, waterStates, unpaidWater, attention }: { rentSta
       {attention.length ? <div className="action-list">{attention.map((item, index) => <div className="action-row" key={`${item.type}-${index}`}><span className="action-icon">{item.type === 'Rent payment' ? '⌂' : '≈'}</span><div className={item.amount ? 'water-summary' : undefined}><strong>{item.type}</strong>{item.amount ? <span className="water-charge"><b>{item.amount}</b>{item.detail}</span> : <p>{item.detail}</p>}</div><div className="action-right"><span className={item.type === 'Water invoice' ? 'action-due' : undefined}>{item.type === 'Water invoice' ? `Due at ${formatDate(item.date)}` : formatDate(item.date)}</span><Status state={item.state} /></div></div>)}</div> : <p className="empty">Nothing is waiting for attention.</p>}
     </section>
   </>
+}
+
+function RentCalendar({ rows }: { rows: RentRow[] }) {
+  const nextUnpaid = rows.find((item) => !item.paid && item.dueDate >= today) || rows.find((item) => !item.paid)
+
+  return <section className="panel rent-calendar">
+    <div className="section-heading"><div><p className="eyebrow">WEEKLY SCHEDULE</p><h2>Rent payments</h2></div><div className="rent-legend"><span className="paid">Paid</span><span className="next">Upcoming</span><span>Scheduled</span></div></div>
+    <div className="rent-months">
+      {rentMonths.map((month) => {
+        const periods = rows.filter((item) => item.periodStart.startsWith(month.key))
+        return <div className="rent-month" key={month.key}>
+          <h3>{month.label}</h3>
+          <div className="rent-weeks">
+            {periods.map((period) => {
+              const isNext = period === nextUnpaid
+              return <article className={`rent-week${period.paid ? ' paid' : isNext ? ' next' : ''}`} key={period.periodStart}>
+                <span className="rent-week-state">{period.paid ? 'Paid' : isNext ? 'Upcoming' : 'Scheduled'}</span>
+                <strong>{formatShortDate(period.periodStart)}</strong>
+                <i>to</i>
+                <strong>{formatShortDate(period.periodEnd)}</strong>
+                <small>{period.paidDate ? `Paid ${formatShortDate(period.paidDate)}` : `Due ${formatShortDate(period.dueDate)}`}</small>
+              </article>
+            })}
+          </div>
+        </div>
+      })}
+    </div>
+  </section>
 }
 
 function LedgerTable({ kind, rows, filter, setFilter, onDownloadRequest }: { kind: 'rent' | 'water'; rows: RentRow[] | WaterRow[]; filter: 'all' | PaymentState; setFilter: (filter: 'all' | PaymentState) => void; onDownloadRequest?: (bill: { url: string; file: string }) => void }) {

@@ -13,7 +13,11 @@ function validateLedger(data: unknown) {
   assert(Array.isArray(ledger.waterInvoices), 'waterInvoices must be an array')
   ledger.rentPayments.forEach((payment, index) => {
     assert(ISO_DATE.test(payment.periodStart) && ISO_DATE.test(payment.periodEnd), `Rent entry ${index + 1} needs ISO dates`)
+    const periodStart = Date.parse(`${payment.periodStart}T00:00:00Z`)
+    const periodEnd = Date.parse(`${payment.periodEnd}T00:00:00Z`)
+    assert((periodEnd - periodStart) / 86_400_000 === 6, `Rent entry ${index + 1} must cover exactly one week`)
     assert(typeof payment.paid === 'boolean', `Rent entry ${index + 1} needs a paid boolean`)
+    assert(payment.paidDate === null || ISO_DATE.test(payment.paidDate), `Rent entry ${index + 1} needs an ISO paid date or null`)
   })
   ledger.waterInvoices.forEach((invoice, index) => {
     assert(ISO_DATE.test(invoice.invoiceDate) && ISO_DATE.test(invoice.dueDate), `Water invoice ${index + 1} needs ISO invoice and due dates`)

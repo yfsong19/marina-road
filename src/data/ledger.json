@@ -1,5 +1,9 @@
 {
   "property": { "name": "Home Ledger", "tenant": "Tenant", "currency": "NZD" },
+  "waterInvoices": [
+    { "invoiceDate": "2026-06-11", "dueDate": "2026-07-21", "total": 64.42, "fixed": 26.38, "tenantUsage": 38.04, "tenantPaid": true, "tenantPaidDate": "2026-06-20", "file": "Watercare_Bill_5072857-03_2026_Jun_11.pdf", "totalPaidByLandlord": true },
+    { "invoiceDate": "2026-07-14", "dueDate": "2026-08-04", "total": 45.43, "fixed": 29.11, "tenantUsage": 16.32, "tenantPaid": false, "tenantPaidDate": null, "file": "Watercare_Bill_5072857-03_2026_Jul_14.pdf", "totalPaidByLandlord": false }
+  ],
   "rentPayments": [
     { "periodStart": "2026-07-20", "periodEnd": "2026-07-26", "paid": true, "paidDate": "2026-07-19" },
     { "periodStart": "2026-07-27", "periodEnd": "2026-08-02", "paid": true, "paidDate": "2026-07-26" },
@@ -12,10 +16,48 @@
     { "periodStart": "2026-09-14", "periodEnd": "2026-09-20", "paid": false, "paidDate": null },
     { "periodStart": "2026-09-21", "periodEnd": "2026-09-27", "paid": false, "paidDate": null },
     { "periodStart": "2026-09-28", "periodEnd": "2026-10-04", "paid": false, "paidDate": null },
-    { "periodStart": "2026-10-05", "periodEnd": "2026-10-11", "paid": false, "paidDate": null }
-  ],
-  "waterInvoices": [
-    { "invoiceDate": "2026-06-11", "dueDate": "2026-07-21", "total": 64.42, "fixed": 26.38, "tenantUsage": 38.04, "tenantPaid": true, "tenantPaidDate": "2026-06-20", "file": "Watercare_Bill_5072857-03_2026_Jun_11.pdf", "totalPaidByLandlord": true },
-    { "invoiceDate": "2026-07-14", "dueDate": "2026-08-04", "total": 45.43, "fixed": 29.11, "tenantUsage": 16.32, "tenantPaid": false, "tenantPaidDate": null, "file": "Watercare_Bill_5072857-03_2026_Jul_14.pdf", "totalPaidByLandlord": false }
+    { "periodStart": "2026-10-05", "periodEnd": "2026-10-11", "paid": false, "paidDate": null },
+    { "periodStart": "2026-10-12", "periodEnd": "2026-10-18", "paid": false, "paidDate": null },
+    { "periodStart": "2026-10-19", "periodEnd": "2026-10-25", "paid": false, "paidDate": null },
+    { "periodStart": "2026-10-26", "periodEnd": "2026-11-01", "paid": false, "paidDate": null },
+    { "periodStart": "2026-11-02", "periodEnd": "2026-11-08", "paid": false, "paidDate": null },
+    { "periodStart": "2026-11-09", "periodEnd": "2026-11-15", "paid": false, "paidDate": null },
+    { "periodStart": "2026-11-16", "periodEnd": "2026-11-22", "paid": false, "paidDate": null },
+    { "periodStart": "2026-11-23", "periodEnd": "2026-11-29", "paid": false, "paidDate": null },
+    { "periodStart": "2026-11-30", "periodEnd": "2026-12-06", "paid": false, "paidDate": null },
+    { "periodStart": "2026-12-07", "periodEnd": "2026-12-13", "paid": false, "paidDate": null },
+    { "periodStart": "2026-12-14", "periodEnd": "2026-12-20", "paid": false, "paidDate": null },
+    { "periodStart": "2026-12-21", "periodEnd": "2026-12-27", "paid": false, "paidDate": null },
+    { "periodStart": "2026-12-28", "periodEnd": "2027-01-03", "paid": false, "paidDate": null },
+    { "periodStart": "2027-01-04", "periodEnd": "2027-01-10", "paid": false, "paidDate": null },
+    { "periodStart": "2027-01-11", "periodEnd": "2027-01-17", "paid": false, "paidDate": null },
+    { "periodStart": "2027-01-18", "periodEnd": "2027-01-24", "paid": false, "paidDate": null },
+    { "periodStart": "2027-01-25", "periodEnd": "2027-01-31", "paid": false, "paidDate": null },
+    { "periodStart": "2027-02-01", "periodEnd": "2027-02-07", "paid": false, "paidDate": null },
+    { "periodStart": "2027-02-08", "periodEnd": "2027-02-14", "paid": false, "paidDate": null },
+    { "periodStart": "2027-02-15", "periodEnd": "2027-02-21", "paid": false, "paidDate": null },
+    { "periodStart": "2027-02-22", "periodEnd": "2027-02-28", "paid": false, "paidDate": null },
+    { "periodStart": "2027-03-01", "periodEnd": "2027-03-07", "paid": false, "paidDate": null },
+    { "periodStart": "2027-03-08", "periodEnd": "2027-03-14", "paid": false, "paidDate": null },
+    { "periodStart": "2027-03-15", "periodEnd": "2027-03-21", "paid": false, "paidDate": null },
+    { "periodStart": "2027-03-22", "periodEnd": "2027-03-28", "paid": false, "paidDate": null },
+    { "periodStart": "2027-03-29", "periodEnd": "2027-04-04", "paid": false, "paidDate": null },
+    { "periodStart": "2027-04-05", "periodEnd": "2027-04-11", "paid": false, "paidDate": null },
+    { "periodStart": "2027-04-12", "periodEnd": "2027-04-18", "paid": false, "paidDate": null },
+    { "periodStart": "2027-04-19", "periodEnd": "2027-04-25", "paid": false, "paidDate": null },
+    { "periodStart": "2027-04-26", "periodEnd": "2027-05-02", "paid": false, "paidDate": null },
+    { "periodStart": "2027-05-03", "periodEnd": "2027-05-09", "paid": false, "paidDate": null },
+    { "periodStart": "2027-05-10", "periodEnd": "2027-05-16", "paid": false, "paidDate": null },
+    { "periodStart": "2027-05-17", "periodEnd": "2027-05-23", "paid": false, "paidDate": null },
+    { "periodStart": "2027-05-24", "periodEnd": "2027-05-30", "paid": false, "paidDate": null },
+    { "periodStart": "2027-05-31", "periodEnd": "2027-06-06", "paid": false, "paidDate": null },
+    { "periodStart": "2027-06-07", "periodEnd": "2027-06-13", "paid": false, "paidDate": null },
+    { "periodStart": "2027-06-14", "periodEnd": "2027-06-20", "paid": false, "paidDate": null },
+    { "periodStart": "2027-06-21", "periodEnd": "2027-06-27", "paid": false, "paidDate": null },
+    { "periodStart": "2027-06-28", "periodEnd": "2027-07-04", "paid": false, "paidDate": null },
+    { "periodStart": "2027-07-05", "periodEnd": "2027-07-11", "paid": false, "paidDate": null },
+    { "periodStart": "2027-07-12", "periodEnd": "2027-07-18", "paid": false, "paidDate": null },
+    { "periodStart": "2027-07-19", "periodEnd": "2027-07-25", "paid": false, "paidDate": null },
+    { "periodStart": "2027-07-26", "periodEnd": "2027-08-01", "paid": false, "paidDate": null }
   ]
 }
