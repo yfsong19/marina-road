@@ -1,0 +1,43 @@
+name: Mark rent paid
+
+on:
+  workflow_dispatch:
+    inputs:
+      period_start:
+        description: Rent period start date (YYYY-MM-DD)
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  mark-rent-paid:
+    # This workflow is only allowed to update the ledger when run by the repository owner.
+    if: github.actor == 'yfsong19'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Mark the rent payment as paid
+        env:
+          PERIOD_START: ${{ inputs.period_start }}
+          TZ: Pacific/Auckland
+        run: node scripts/mark-rent-paid.mjs "$PERIOD_START" "$(date +%F)"
+
+      - name: Create pull request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: automation/rent-paid-${{ inputs.period_start }}
+          delete-branch: true
+          commit-message: Mark rent paid for ${{ inputs.period_start }}
+          title: Mark rent paid for ${{ inputs.period_start }}
+          body: |
+            Marks the rent payment beginning on `${{ inputs.period_start }}` as paid.
+            The paid date is set automatically in the Pacific/Auckland timezone.
