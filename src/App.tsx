@@ -50,7 +50,10 @@ function App() {
     ...rentStates.filter((item) => item.state === 'overdue').map((item) => ({ type: 'Rent payment', date: item.dueDate, detail: `${formatDate(item.periodStart)} – ${formatDate(item.periodEnd)}`, state: item.state })),
     ...waterStates.filter((item) => !item.tenantPaid).map((item) => ({ type: 'Water invoice', date: item.paymentDueDate, detail: 'tenant to pay', amount: formatMoney(item.tenantUsage), state: item.state })),
   ].sort((a, b) => a.date.getTime() - b.date.getTime())
-  const visibleWater = useMemo(() => filter === 'all' ? waterStates : waterStates.filter((item) => item.state === filter), [filter, waterStates])
+  const visibleWater = useMemo(() => {
+    const invoices = filter === 'all' ? waterStates : waterStates.filter((item) => item.state === filter)
+    return [...invoices].sort((a, b) => parseDate(b.invoiceDate).getTime() - parseDate(a.invoiceDate).getTime())
+  }, [filter, waterStates])
 
   const downloadBill = () => {
     if (!pendingBill) return
