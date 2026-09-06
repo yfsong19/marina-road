@@ -13,7 +13,7 @@
     { "periodStart": "2026-08-17", "periodEnd": "2026-08-23", "paid": true, "paidDate": "2026-08-16" },
     { "periodStart": "2026-08-24", "periodEnd": "2026-08-30", "paid": true, "paidDate": "2026-08-23" },
     { "periodStart": "2026-08-31", "periodEnd": "2026-09-06", "paid": true, "paidDate": "2026-08-30" },
-    { "periodStart": "2026-09-07", "periodEnd": "2026-09-13", "paid": false, "paidDate": null },
+    { "periodStart": "2026-09-07", "periodEnd": "2026-09-13", "paid": true, "paidDate": "2026-09-06" },
     { "periodStart": "2026-09-14", "periodEnd": "2026-09-20", "paid": false, "paidDate": null },
     { "periodStart": "2026-09-21", "periodEnd": "2026-09-27", "paid": false, "paidDate": null },
     { "periodStart": "2026-09-28", "periodEnd": "2026-10-04", "paid": false, "paidDate": null },
