@@ -25,7 +25,7 @@ if (matchingPayments.length > 1) {
   throw new Error(`More than one rent payment exists for periodStart ${periodStart}`)
 }
 
-if (matchingPayments[0].paid) {
+if (matchingPayments[0].paidDate !== null) {
   throw new Error(`Rent payment for periodStart ${periodStart} is already marked paid`)
 }
 
@@ -40,7 +40,6 @@ if (!paymentText) {
 }
 
 const updatedPaymentText = paymentText
-  .replace(/"paid":\s*false/, '"paid": true')
   .replace(/"paidDate":\s*null/, `"paidDate": "${paidDate}"`)
 
 if (updatedPaymentText === paymentText) {
